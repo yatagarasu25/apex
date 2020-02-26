@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using Apex.WinForms.Interop;
+using SharpShell.Interop;
 
 namespace Apex.WinForms.Shell
 {
@@ -53,7 +54,7 @@ namespace Apex.WinForms.Shell
         {
             //  Get the desktop shell folder interface. 
             IShellFolder desktopShellFolderInterface = null;
-            var result = Shell32.SHGetDesktopFolder(ref desktopShellFolderInterface);
+            var result = Shell32.SHGetDesktopFolder(out desktopShellFolderInterface);
 
             //  Validate the result.
             if(result != 0)
@@ -103,8 +104,11 @@ namespace Apex.WinForms.Shell
             PIDL = Shell32.ILCombine(parentFolder.PIDL, pidl);
 
             //  Use the desktop folder to get attributes.
+            var apidl = Marshal.AllocCoTaskMem(IntPtr.Size * 1);
+            Marshal.Copy(new IntPtr[] { pidl }, 0, apidl, 1);
+
             var flags = SFGAO.SFGAO_FOLDER | SFGAO.SFGAO_HASSUBFOLDER | SFGAO.SFGAO_BROWSABLE | SFGAO.SFGAO_FILESYSTEM;
-            parentFolder.ShellFolderInterface.GetAttributesOf(1, ref pidl, ref flags);
+            parentFolder.ShellFolderInterface.GetAttributesOf(1, apidl, ref flags);
             IsFolder = (flags & SFGAO.SFGAO_FOLDER) != 0;
             HasSubFolders = (flags & SFGAO.SFGAO_HASSUBFOLDER) != 0;
 
@@ -123,9 +127,9 @@ namespace Apex.WinForms.Shell
             if (IsFolder)
             {
                 //  Bind the shell folder interface.
-                IShellFolder shellFolderInterface;
+                IntPtr shellFolderInterface;
                 var result = parentFolder.ShellFolderInterface.BindToObject(pidl, IntPtr.Zero, ref Shell32.IID_IShellFolder, out shellFolderInterface);
-                ShellFolderInterface = shellFolderInterface;
+                ShellFolderInterface = shellFolderInterface != IntPtr.Zero ? Marshal.GetObjectForIUnknown(shellFolderInterface) as IShellFolder : null;
 
                 //  Validate the result.
                 if(result != 0)
@@ -182,23 +186,28 @@ namespace Apex.WinForms.Shell
                 }
 
                 //  Start going through children.
-                IntPtr childPIDL;
-                int enumResult;
-                pEnum.Next(1, out childPIDL, out enumResult);
+                IntPtr pidlArray = Marshal.AllocCoTaskMem(IntPtr.Size * 1); ;
+                uint enumResult;
+                pEnum.Next(1, pidlArray, out enumResult);
 
                 //  Now start enumerating.
-                while (childPIDL != IntPtr.Zero && enumResult == 1)
+                while (pidlArray != IntPtr.Zero && enumResult == 1)
                 {
+                    var pidls = new IntPtr[enumResult];
+                    Marshal.Copy(pidlArray, pidls, 0, (int)enumResult);
+
                     //  Create a new shell folder.
                     var childShellFolder = new ShellItem();
 
                     //  Initialize it.
                     try
                     {
-                        childShellFolder.Initialise(childPIDL, this);
+                        childShellFolder.Initialise(pidls[0], this);
                     }
                     catch (Exception exception)
                     {
+                        Marshal.FreeCoTaskMem(pidlArray);
+                        Marshal.FreeCoTaskMem(pidls[0]);
                         throw new InvalidOperationException("Failed to initialise child.", exception);
                     }
 
@@ -206,14 +215,16 @@ namespace Apex.WinForms.Shell
                     children.Add(childShellFolder);
 
                     //  Free the PIDL, reset the result.
-                    Marshal.FreeCoTaskMem(childPIDL);
+                    Marshal.FreeCoTaskMem(pidls[0]);
 
                     //  Move onwards.
-                    pEnum.Next(1, out childPIDL, out enumResult);
+                    pEnum.Next(1, pidlArray, out enumResult);
                 }
 
                 //  Release the enumerator.
-                Marshal.ReleaseComObject(pEnum);
+                Marshal.FreeCoTaskMem(pidlArray);
+                if (Marshal.IsComObject(pEnum))
+                    Marshal.ReleaseComObject(pEnum);
             }
             catch (Exception exception)
             {

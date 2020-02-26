@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Apex.WinForms.Interop;
+using SharpShell.Interop;
 
 namespace Apex.WinForms.Shell
 {

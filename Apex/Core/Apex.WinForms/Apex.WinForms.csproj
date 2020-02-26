@@ -13,10 +13,14 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -78,19 +82,10 @@
     </Compile>
     <Compile Include="Extensions\TreeViewExtensions.cs" />
     <Compile Include="Interop\ComCtl32.cs" />
-    <Compile Include="Interop\CSIDL.cs" />
-    <Compile Include="Interop\IEnumIDList.cs" />
-    <Compile Include="Interop\IImageList.cs" />
     <Compile Include="Interop\IMAGEINFO.cs" />
     <Compile Include="Interop\IMAGELISTDRAWPARAMS.cs" />
-    <Compile Include="Interop\IShellFolder.cs" />
     <Compile Include="Interop\POINT.cs" />
     <Compile Include="Interop\RECT.cs" />
-    <Compile Include="Interop\SFGAO.cs" />
-    <Compile Include="Interop\SHCONTF.cs" />
-    <Compile Include="Interop\Shell32.cs" />
-    <Compile Include="Interop\SHFILEINFO.cs" />
-    <Compile Include="Interop\SHGFI.cs" />
     <Compile Include="Interop\SHGNO.cs" />
     <Compile Include="Interop\STRRET.cs" />
     <Compile Include="Interop\User32.cs" />
@@ -104,6 +99,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Apex.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\sharpshell\SharpShell\SharpShell\SharpShell.csproj">
+      <Project>{b5d5f670-bfba-4d09-91c6-74bb12b7edd4}</Project>
+      <Name>SharpShell</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
